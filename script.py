@@ -9,6 +9,7 @@ from loguru import logger
 
 
 URL_RE = re.compile(r"^https://pokeapi\.co/api/v2/pokemon(/\d+/?)?(\?.*)?$")
+POKEMON_ENTRY_RE = re.compile(r"^https://pokeapi\.co/api/v2/pokemon/\d+/?$")
 
 uncrawled_urls = {"https://pokeapi.co/api/v2/pokemon"}
 crawled = {}
@@ -46,6 +47,15 @@ while uncrawled_urls:
     # Announce crawling completion
     logger.info(f"Crawled: {url}")
 
+# Scrub out information we don't need to reduce the file size
+for key, entry in crawled.items():
+    if POKEMON_ENTRY_RE.match(key):
+        entry = {
+            "name": entry["name"],
+            "types": entry["types"],
+        }
+        crawled[key] = entry
+
 # Write crawled data to a file
-with gzip.open("pokemon.json.gz", "w") as sink:
+with open("pokemon.json", "w") as sink:
     json.dump(crawled, sink)
